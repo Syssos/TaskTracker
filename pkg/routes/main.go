@@ -9,44 +9,26 @@ import (
 	"encoding/json"
 
 	"github.com/gorilla/mux"
+	"github.comSyssos/ProjectTaskTracker/pkg/project"
 )
-
-// ****************************************************************************************************************************************
-// Project Structures Used for tracking notes.
-// This project will deal with reading and writing tasks to a file for long term storage
-
-// AS OF RIGHT NOW THE PROJECT STORES EVERYTHING IN MEMORY TO AVOID KEEPING TRACK OF THE DATA FILE OR DATA STORED IN A FILE
-
-
-type Task struct {
-	ID        string `json: "id"`
-	TaskTitle string `json: "tasktitle"`
-	TaskData  string `json: "taskdata"`
-}
-
-type Project struct {
-	ID            string `json: "id"`
-	ProjectTitle  string `json: "projecttitle"`
-	Tasks         []Task `json: "Tasks"`
-}
 
 // ****************************************************************************************************************************************
 // Createing Temp in memory storage for project to use while testing
 
-var App_Instance_Projects = []Project{
-	{ID: "L62L0p", ProjectTitle: "Perminant Task", Tasks: []Task{Task{ID: "CJ1a32", TaskTitle: "Task 1", TaskData: "This is a test task"},Task{ID: "xs4oih", TaskTitle: "Task 2", TaskData: "This is a test task"}}},
+var App_Instance_Projects = []project.Project{
+	{ID: "L62L0p", ProjectTitle: "Perminant Task", Tasks: []project.Task{{ID: "CJ1a32", TaskTitle: "Task 1", TaskData: "This is a test task"},{ID: "xs4oih", TaskTitle: "Task 2", TaskData: "This is a test task"}}},
 }
 
-func projectFromAppList(id string) *Project {
+func projectFromAppList(id string) *project.Project {
 	for _, item := range App_Instance_Projects {
 		if item.ID == id {
 			return &item
 		}
 	}
-	return &Project{}
+	return &project.Project{}
 }
 
-func updateProject(pjk *Project) {
+func updateProject(pjk *project.Project) {
 	for x, item := range App_Instance_Projects {
 		if item.ID == pjk.ID {
 			App_Instance_Projects[x] = *pjk
@@ -72,17 +54,8 @@ func NewProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var pro Project
-	pro.ID = String(6)
-	err := json.NewDecoder(r.Body).Decode(&pro)
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	App_Instance_Projects = append(App_Instance_Projects, pro)
-
+	pro := project.NewProject(r)
+	App_Instance_Projects = append(App_Instance_Projects, *pro)
 	payload, _ := json.Marshal(App_Instance_Projects)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -94,7 +67,7 @@ func UpdateProject(w http.ResponseWriter, r *http.Request) {
 
 	for x, item := range App_Instance_Projects {
 		if string(item.ID) == vars["proId"] {
-			var pro Project
+			var pro project.Project
 			err := json.NewDecoder(r.Body).Decode(&pro)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
@@ -114,7 +87,7 @@ func NewTask(w http.ResponseWriter, r *http.Request) {
 
 	for _, item := range App_Instance_Projects {
 		if string(item.ID) == vars["proId"] {
-			var tsk Task
+			var tsk project.Task
 			tsk.ID = String(6)
 			err := json.NewDecoder(r.Body).Decode(&tsk)
 			if err != nil {
